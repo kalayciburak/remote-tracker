@@ -1,0 +1,217 @@
+.rt-daypicker {
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow:
+    0 12px 32px rgb(28 27 23 / 0.10),
+    0 4px 12px rgb(28 27 23 / 0.06);
+  color: hsl(var(--popover-foreground));
+  font-family: "Inter", system-ui, sans-serif;
+  outline: none;
+  width: max-content;
+  z-index: 60;
+  animation: rt-daypicker-pop 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rt-daypicker .rdp-root {
+  --rdp-accent-color: hsl(var(--primary));
+  --rdp-accent-background-color: hsl(var(--accent));
+  --rdp-background-color: transparent;
+  --rdp-weekday-text-color: hsl(var(--muted-foreground));
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 32px;
+  --rdp-day_button-width: 32px;
+  --rdp-day_button-border: 1px solid transparent;
+  --rdp-day_button-border-radius: calc(var(--radius) - 6px);
+  --rdp-selected-border: 1px solid hsl(var(--primary));
+  --rdp-disabled-opacity: 0.35;
+  --rdp-outside-opacity: 0.45;
+  --rdp-today-color: hsl(var(--primary));
+  --rdp-nav-height: 36px;
+  --rdp-nav_button-height: 28px;
+  --rdp-nav_button-width: 28px;
+  --rdp-weekday-opacity: 1;
+  --rdp-weekday-padding: 0;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+
+.rt-daypicker .rdp-months {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.rt-daypicker .rdp-month {
+  margin: 0;
+}
+
+.rt-daypicker .rdp-month_grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.rt-daypicker .rdp-month_caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0 10px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: capitalize;
+  letter-spacing: 0;
+  color: hsl(var(--foreground));
+}
+
+.rt-daypicker .rdp-caption_label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.rt-daypicker .rdp-nav {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--rdp-nav-height);
+  pointer-events: none;
+}
+
+.rt-daypicker .rdp-button_previous,
+.rt-daypicker .rdp-button_next {
+  width: 28px;
+  height: 28px;
+  border-radius: calc(var(--radius) - 6px);
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 1px solid hsl(var(--border));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    background 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rt-daypicker .rdp-button_previous {
+  inset-inline-start: 0;
+}
+
+.rt-daypicker .rdp-button_next {
+  inset-inline-end: 0;
+}
+
+.rt-daypicker .rdp-button_previous:hover,
+.rt-daypicker .rdp-button_next:hover {
+  background: hsl(var(--secondary));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--input));
+}
+
+.rt-daypicker .rdp-chevron {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.rt-daypicker .rdp-weekdays {
+  display: table-row;
+}
+
+.rt-daypicker .rdp-weekday {
+  width: 36px;
+  height: 28px;
+  text-align: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  padding: 0;
+}
+
+.rt-daypicker .rdp-week {
+  display: table-row;
+}
+
+.rt-daypicker .rdp-day {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.rt-daypicker .rdp-day_button {
+  width: 32px;
+  height: 32px;
+  border-radius: calc(var(--radius) - 6px);
+  color: hsl(var(--foreground));
+  font-size: 13px;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rt-daypicker .rdp-day_button:hover {
+  background: hsl(var(--secondary));
+}
+
+.rt-daypicker .rdp-selected {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.rt-daypicker .rdp-today .rdp-day_button {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+.rt-daypicker .rdp-selected .rdp-day_button {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+}
+
+.rt-daypicker .rdp-selected .rdp-day_button:hover {
+  background: hsl(var(--primary));
+  filter: brightness(0.96);
+}
+
+.rt-daypicker .rdp-outside .rdp-day_button {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.45;
+}
+
+.rt-daypicker .rdp-disabled .rdp-day_button {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+@keyframes rt-daypicker-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

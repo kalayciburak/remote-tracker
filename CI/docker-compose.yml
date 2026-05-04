@@ -1,0 +1,69 @@
+services:
+  rt-postgres:
+    image: "${BASE_POSTGRES_IMAGE:-repo.mhrs.gov.tr/remotetracker/base/postgres:16-alpine}"
+    container_name: remote-tracker-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-remote_tracker}
+      POSTGRES_USER: ${DB_USER:-remote_tracker}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-remote_tracker}
+      TZ: ${TZ:-Europe/Istanbul}
+    volumes:
+      - rt-postgres-data:/var/lib/postgresql/data
+    networks:
+      - dock_net
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-remote_tracker} -d ${DB_NAME:-remote_tracker}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  rt-backend:
+    image: "${IMAGE_PREFIX:-repo.mhrs.gov.tr/remote-tracker}/backend:${VERSION:-dev}"
+    container_name: remote-tracker-backend
+    environment:
+      DB_HOST: rt-postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-remote_tracker}
+      DB_USER: ${DB_USER:-remote_tracker}
+      DB_PASSWORD: ${DB_PASSWORD:-remote_tracker}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-must-be-at-least-32-bytes-long-secret-key}
+      JWT_TTL_HOURS: ${JWT_TTL_HOURS:-24}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-Welcome123!}
+      SERVER_PORT: 8080
+      TZ: ${TZ:-Europe/Istanbul}
+    ports:
+      - "8082:8080"
+    networks:
+      - dock_net
+    depends_on:
+      rt-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  rt-frontend:
+    image: "${IMAGE_PREFIX:-repo.mhrs.gov.tr/remote-tracker}/frontend:${VERSION:-dev}"
+    container_name: remote-tracker-frontend
+    networks:
+      - dock_net
+    ports:
+      - "3002:80"
+    depends_on:
+      - rt-backend
+    restart: unless-stopped
+
+volumes:
+  rt-postgres-data:
+
+networks:
+  dock_net:
+    external: true

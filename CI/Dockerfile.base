@@ -1,0 +1,42 @@
+# Build upstream base images and retag/push to internal registry.
+# Usage (example):
+#   docker build -f CI/Dockerfile.base --target base-maven   -t repo.mhrs.gov.tr/remotetracker/base/maven:3.9-eclipse-temurin-21 .
+#   docker build -f CI/Dockerfile.base --target base-temurin -t repo.mhrs.gov.tr/remotetracker/base/eclipse-temurin:21-jre-alpine .
+#   docker build -f CI/Dockerfile.base --target base-temurin-wget -t repo.mhrs.gov.tr/remotetracker/base/eclipse-temurin:21-jre-wget .
+#   docker build -f CI/Dockerfile.base --target base-node    -t repo.mhrs.gov.tr/remotetracker/base/node:20-alpine .
+#   docker build -f CI/Dockerfile.base --target base-nginx   -t repo.mhrs.gov.tr/remotetracker/base/nginx:1.27-alpine .
+#   docker build -f CI/Dockerfile.base --target base-postgres -t repo.mhrs.gov.tr/remotetracker/base/postgres:16-alpine .
+#
+# Build-deps cache images (download once, reuse offline):
+#   docker build -f CI/Dockerfile.base --target backend-build-deps  -t repo.mhrs.gov.tr/remotetracker/base/remote-tracker-backend-build:deps .
+#   docker build -f CI/Dockerfile.base --target frontend-build-deps -t repo.mhrs.gov.tr/remotetracker/base/remote-tracker-frontend-build:deps .
+#
+# Then:
+#   docker push repo.mhrs.gov.tr/remotetracker/base/<name>:<tag>
+
+FROM maven:3.9-eclipse-temurin-21 AS base-maven
+
+FROM eclipse-temurin:21-jre-alpine AS base-temurin
+
+FROM eclipse-temurin:21-jre-alpine AS base-temurin-wget
+RUN apk add --no-cache wget
+
+FROM node:20-alpine AS base-node
+
+FROM nginx:1.27-alpine AS base-nginx
+
+FROM postgres:16-alpine AS base-postgres
+
+FROM repo.mhrs.gov.tr/remotetracker/base/maven:3.9-eclipse-temurin-21 AS backend-build-deps
+WORKDIR /app
+COPY backend/pom.xml ./pom.xml
+COPY backend/src ./src
+# Download everything needed for an offline package build (plugins + annotation processors).
+RUN mvn -B -DskipTests -Dspotless.check.skip=true package \
+  && rm -rf target
+
+FROM repo.mhrs.gov.tr/remotetracker/base/node:20-alpine AS frontend-build-deps
+WORKDIR /app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+

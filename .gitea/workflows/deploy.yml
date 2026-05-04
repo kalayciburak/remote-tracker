@@ -1,0 +1,106 @@
+name: Build and Deploy Remote Tracker
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: remote-tracker
+    env:
+      SURUM: "1.0"
+      BUILD_ID: ${{ gitea.run_id }}
+      GIT_URL: "${{ gitea.server_url }}/${{ gitea.repository }}.git"
+      BRANCH: "${{ gitea.ref_name }}"
+      WORKDIR: "/data/remote-tracker/remote-tracker"
+
+      # Docker registry/image naming
+      REGISTRY: "${{ vars.REGISTRY }}"
+      IMAGE_REPOSITORY: "${{ vars.IMAGE_REPOSITORY }}"
+
+      # Git auth (private repo)
+      GIT_USERNAME: "${{ vars.GIT_USERNAME }}"
+      GIT_TOKEN: "${{ secrets.GIT_TOKEN }}"
+
+    steps:
+      - name: Git clone (private repo)
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GIT_USERNAME:-}" ] || [ -z "${GIT_TOKEN:-}" ]; then
+            echo "Missing git credentials. Configure vars.GIT_USERNAME and secrets.GIT_TOKEN."
+            exit 1
+          fi
+
+          rm -rf "$WORKDIR"
+          mkdir -p "$(dirname "$WORKDIR")"
+
+          askpass_script="$(mktemp)"
+          trap 'rm -f "$askpass_script"' EXIT
+
+          printf '%s\n' \
+            '#!/bin/sh' \
+            'case "$1" in' \
+            '  *Username*) printf "%s" "$GIT_USERNAME" ;;' \
+            '  *Password*) printf "%s" "$GIT_TOKEN" ;;' \
+            '  *) exit 1 ;;' \
+            'esac' > "$askpass_script"
+
+          chmod 700 "$askpass_script"
+
+          GIT_ASKPASS="$askpass_script" \
+          GIT_TERMINAL_PROMPT=0 \
+          git clone --single-branch --branch "$BRANCH" --depth=1 "$GIT_URL" "$WORKDIR"
+
+      - name: Docker login
+        run: |
+          set -euo pipefail
+
+          REGISTRY_EFF="${REGISTRY:-repo.mhrs.gov.tr}"
+
+          if [ -z "${{ vars.DOCKER_USERNAME }}" ] || [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+            echo "Missing docker credentials. Configure vars.DOCKER_USERNAME and secrets.DOCKER_PASSWORD."
+            exit 1
+          fi
+
+          echo "${{ secrets.DOCKER_PASSWORD }}" \
+          | docker login "${REGISTRY_EFF}" \
+              -u "${{ vars.DOCKER_USERNAME }}" \
+              --password-stdin
+
+      - name: Build & push images
+        working-directory: /data/remote-tracker/remote-tracker
+        run: |
+          set -euo pipefail
+
+          IMAGE_TAG="${SURUM}.${BUILD_ID}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" > .deploy-meta
+
+          REGISTRY_EFF="${REGISTRY:-repo.mhrs.gov.tr}"
+          IMAGE_REPOSITORY_EFF="${IMAGE_REPOSITORY:-remote-tracker}"
+          IMAGE_PREFIX="${REGISTRY_EFF}/${IMAGE_REPOSITORY_EFF}"
+
+          docker build -t "${IMAGE_PREFIX}/backend:${IMAGE_TAG}" ./backend
+          docker build -t "${IMAGE_PREFIX}/frontend:${IMAGE_TAG}" ./frontend
+
+          docker push "${IMAGE_PREFIX}/backend:${IMAGE_TAG}"
+          docker push "${IMAGE_PREFIX}/frontend:${IMAGE_TAG}"
+
+      - name: Deploy with Docker Compose
+        working-directory: /data/remote-tracker/remote-tracker
+        run: |
+          set -euo pipefail
+          source .deploy-meta
+
+          export VERSION="${IMAGE_TAG}"
+          export IMAGE_PREFIX="${REGISTRY:-repo.mhrs.gov.tr}/${IMAGE_REPOSITORY:-remote-tracker}"
+          export JWT_SECRET='${{ secrets.JWT_SECRET }}'
+          export JWT_TTL_HOURS='${{ vars.JWT_TTL_HOURS }}'
+          export INITIAL_USER_PASSWORD='${{ secrets.INITIAL_USER_PASSWORD }}'
+          export CORS_ORIGINS='${{ vars.CORS_ORIGINS }}'
+
+          COMPOSE_FILE="CI/docker-compose.yml"
+
+          docker compose -f "${COMPOSE_FILE}" pull rt-backend rt-frontend rt-postgres
+          docker compose -f "${COMPOSE_FILE}" up -d rt-postgres
+          docker compose -f "${COMPOSE_FILE}" up -d --no-deps --force-recreate rt-backend rt-frontend
+
+          echo "Deployment completed successfully."

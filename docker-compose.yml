@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: remote-tracker-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-remote_tracker}
+      POSTGRES_USER: ${DB_USER:-remote_tracker}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-remote_tracker}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-remote_tracker} -d ${DB_NAME:-remote_tracker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: remote-tracker-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-remote_tracker}
+      DB_USER: ${DB_USER:-remote_tracker}
+      DB_PASSWORD: ${DB_PASSWORD:-remote_tracker}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-must-be-at-least-32-bytes-long-secret-key}
+      JWT_TTL_HOURS: ${JWT_TTL_HOURS:-24}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      SERVER_PORT: 8080
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-Tbyte123!}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: remote-tracker-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+volumes:
+  postgres_data:
+    driver: local

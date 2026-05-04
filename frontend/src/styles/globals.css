@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* mhrs-retro tokens, shifted away from gray into a cleaner blue-lavender canvas */
+    --background: 228 100% 98%;           /* #F7F9FF canvas */
+    --foreground: 240 17% 6%;              /* #0B0B10 ink-primary */
+
+    --card: 0 0% 100%;                     /* #FFFFFF bg-surface */
+    --card-foreground: 240 17% 6%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 17% 6%;
+
+    --primary: 243 75% 59%;                /* #4F46E5 accent */
+    --primary-foreground: 0 0% 100%;       /* ink-on-saturated */
+
+    --secondary: 234 100% 96%;             /* soft blue-lavender muted */
+    --secondary-foreground: 240 17% 6%;
+
+    --muted: 234 100% 96%;
+    --muted-foreground: 226 19% 42%;
+
+    --accent: 263 86% 95%;                 /* #EEE4FD accent-soft */
+    --accent-foreground: 243 75% 40%;
+
+    --destructive: 353 57% 51%;            /* #c93b4b */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 232 64% 91%;
+    --input: 232 36% 81%;
+    --ring: 243 75% 59%;
+
+    --radius: 0.875rem;                    /* 14px mhrs --radius */
+
+    /* Domain state colors — derived from mhrs-retro semantics + amber for everyone-office */
+    --remote-bg: 145 50% 86%;              /* #C8EDD8 cat-good-soft — Remote */
+    --remote-fg: 159 76% 28%;              /* #16A974 cat-good — darker for fg */
+    --remote-line: 159 76% 38%;
+
+    --office-bg: 213 97% 87%;              /* pastel blue — B (other group) ofiste */
+    --office-fg: 224 73% 32%;
+    --office-line: 217 91% 53%;
+
+    --deploy-bg: 35 100% 86%;              /* #FED7AA pastel amber — Tüm ekip */
+    --deploy-fg: 24 95% 33%;               /* dark amber */
+    --deploy-line: 25 95% 53%;
+
+    --holiday-bg: 353 57% 51%;             /* #c93b4b */
+    --holiday-fg: 0 0% 100%;
+    --holiday-line: 353 57% 51%;
+
+    --group-a-bg: 145 50% 86%;
+    --group-a-fg: 159 76% 22%;
+    --group-b-bg: 263 86% 92%;             /* light violet for B group avatar */
+    --group-b-fg: 245 58% 35%;
+  }
+
+  .dark {
+    --background: 240 33% 2%;              /* #040406 bg-canvas */
+    --foreground: 263 100% 96%;            /* #F5EEFF ink-primary */
+
+    --card: 240 16% 5%;                    /* #09090D bg-surface */
+    --card-foreground: 263 100% 96%;
+
+    --popover: 240 16% 5%;
+    --popover-foreground: 263 100% 96%;
+
+    --primary: 236 100% 78%;               /* #8F96FF accent dark */
+    --primary-foreground: 240 17% 6%;
+
+    --secondary: 235 16% 9%;               /* #14141D bg-muted */
+    --secondary-foreground: 263 100% 96%;
+
+    --muted: 235 16% 9%;
+    --muted-foreground: 230 14% 63%;       /* #8590BD ink-tertiary */
+
+    --accent: 230 25% 9%;                  /* #11131E accent-soft dark */
+    --accent-foreground: 236 100% 78%;
+
+    --destructive: 353 57% 51%;            /* #c93b4b */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 232 18% 18%;                 /* #252737 */
+    --input: 230 22% 28%;                  /* #353C56 */
+    --ring: 236 100% 78%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: 'tnum', 'zero'; }
+}
+
+@layer components {
+  .cell-weekend {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--secondary) / 0.62),
+      hsl(var(--card)) 72%
+    );
+  }
+  .cell-holiday {
+    background: #c93b4b !important;
+    color: hsl(var(--holiday-fg)) !important;
+    box-shadow: inset 0 0 0 1px hsl(var(--holiday-line) / 0.36);
+  }
+  .cell-holiday:hover {
+    background: #c93b4b !important;
+  }
+  .cell-holiday-half {
+    background: linear-gradient(to bottom, hsl(var(--card)) 0%, hsl(var(--card)) 50%, #c93b4b 50%, #c93b4b 100%) !important;
+    color: hsl(var(--foreground));
+    box-shadow: inset 0 0 0 1px hsl(var(--holiday-line) / 0.36);
+  }
+  .cell-holiday-half:hover {
+    background: linear-gradient(to bottom, hsl(var(--secondary) / 0.4) 0%, hsl(var(--secondary) / 0.4) 50%, #c93b4b 50%, #c93b4b 100%) !important;
+  }
+  .calendar-weekdays {
+    background:
+      linear-gradient(
+        135deg,
+        hsl(var(--primary)) 0%,
+        color-mix(in srgb, hsl(var(--primary)) 82%, hsl(var(--remote-line)) 18%) 100%
+      );
+    border-color: hsl(var(--primary) / 0.28);
+  }
+  .calendar-weekdays > div {
+    color: hsl(var(--primary-foreground)) !important;
+    border-right: 1px solid hsl(var(--primary-foreground) / 0.18);
+  }
+  .calendar-weekdays > div:last-child {
+    border-right: 0;
+  }
+  .drawer-bounce {
+    animation: drawer-bounce 420ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  .modal-bounce {
+    animation: modal-bounce 460ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  .btn-primary-gradient {
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, hsl(var(--primary)) 92%, white 8%) 0%,
+        hsl(var(--primary)) 58%,
+        color-mix(in srgb, hsl(var(--primary)) 74%, hsl(var(--remote-line)) 26%) 100%
+      );
+    border-color: hsl(var(--primary) / 0.34);
+    color: hsl(var(--primary-foreground));
+    box-shadow:
+      0 8px 18px hsl(var(--primary) / 0.16),
+      0 2px 6px rgb(28 27 23 / 0.06);
+  }
+  .btn-primary-gradient:hover {
+    background:
+      linear-gradient(
+        135deg,
+        hsl(var(--primary)) 0%,
+        color-mix(in srgb, hsl(var(--primary)) 88%, black 12%) 100%
+      );
+  }
+  .surface-elevated {
+    box-shadow:
+      0 4px 12px rgb(28 27 23 / 0.06),
+      0 2px 4px rgb(28 27 23 / 0.04);
+  }
+}
+
+@keyframes drawer-bounce {
+  0%, 100% { transform: translateX(0) scale(1); }
+  30% { transform: translateX(-22px) scale(0.992); }
+  62% { transform: translateX(9px) scale(1.004); }
+  82% { transform: translateX(-4px) scale(1); }
+}
+
+@keyframes modal-bounce {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  18%      { transform: translate(-50%, -53%) scale(1.015); }
+  42%      { transform: translate(-50%, -47%) scale(0.99); }
+  68%      { transform: translate(-50%, -50.6%) scale(1.005); }
+  86%      { transform: translate(-50%, -50%) scale(1); }
+}
+
+@layer base {
+  [data-sonner-toast] {
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 10px !important;
+    background: hsl(var(--card)) !important;
+    color: hsl(var(--foreground)) !important;
+    box-shadow:
+      0 12px 32px rgb(28 27 23 / 0.08),
+      0 4px 12px rgb(28 27 23 / 0.06) !important;
+  }
+  [data-sonner-toast][data-type="success"] {
+    border-color: hsl(159 76% 38% / 0.40) !important;
+    background: hsl(145 60% 94%) !important;
+    color: hsl(159 76% 22%) !important;
+  }
+  [data-sonner-toast][data-type="error"] {
+    border-color: #c93b4b !important;
+    background: #c93b4b !important;
+    color: #ffffff !important;
+  }
+  [data-sonner-toast][data-type="warning"],
+  [data-sonner-toast][data-type="info"] {
+    border-color: hsl(var(--primary) / 0.32) !important;
+    background: hsl(263 86% 96%) !important;
+    color: hsl(243 75% 32%) !important;
+  }
+  [data-sonner-toast] [data-title] {
+    color: inherit !important;
+    font-weight: 650 !important;
+  }
+  [data-sonner-toast] [data-description] {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  [data-sonner-toast] [data-close-button] {
+    display: none !important;
+  }
+}
